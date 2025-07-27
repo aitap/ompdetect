@@ -1,0 +1,40 @@
+#!/bin/sh
+: > config.log
+
+OMP_CFLAGS='$(SHLIB_OPENMP_CFLAGS)'
+OMP_LIBS='$(SHLIB_OPENMP_CFLAGS)'
+
+log () {
+	printf "$@" | tee -a config.log
+}
+
+test_openmp () {
+	log "* checking if OpenMP works with CFLAGS=%s LIBS=%s... " "$1" "$2"
+	if "${R_HOME}"/bin/Rscript tools/test-openmp.R "$1" "$2" >> config.log 2>&1; then
+		log "yes\n"
+		OMP_CFLAGS="$1"
+		OMP_LIBS="$2"
+		return 0
+	else
+		log "no\n"
+		return 1
+	fi
+}
+
+detect_openmp_darwin () {
+	test_openmp "$OMP_CFLAGS" "$OMP_LIBS" || \
+	test_openmp "-Xclang -fopenmp" "-lomp" || \
+	{ OMP_CFLAGS=""; OMP_LIBS=""; }
+}
+
+case "$(uname)" in
+Darwin)
+	log "Guessing OpenMP configuration for macOS\n"
+	detect_openmp_darwin ;;
+esac
+
+log "Using CFLAGS=%s, LIBS=%s for OpenMP\n" "${OMP_CFLAGS}" "${OMP_LIBS}"
+sed \
+	-e "s/@SHLIB_OPENMP_CFLAGS@/${OMP_CFLAGS}/" \
+	-e "s/@SHLIB_OPENMP_LIBS@/${OMP_LIBS}/" \
+	src/Makevars.in > src/Makevars

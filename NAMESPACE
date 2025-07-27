@@ -1,0 +1,3 @@
+useDynLib(ompdetect, .registration = TRUE)
+importFrom(stats, setNames)
+export(ompdetect, omplimits)
