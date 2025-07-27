@@ -13,12 +13,14 @@ log () {
 }
 
 test_openmp () {
-	log "* checking if OpenMP works with CFLAGS=%s LIBS=%s... " "$1" "$2"
 	# --preclean is not enough; remove the DLL too
 	# otherwise Make may assume that the same-second object file is not newer than the previously built DLL
 	"${R_HOME}"/bin/Rscript -e 'unlink(paste0("test", .Platform$dynlib.ext))'
 
-	if ! PKG_CFLAGS="$1" PKG_LIBS="$2" "${R_HOME}"/bin/R CMD SHLIB --preclean --clean test.c >>config.log 2>&1; then
+	CFLAGS="${PKG_CFLAGS:+${PKG_CFLAGS} }$1"
+	LIBS="${PKG_LIBS:+${PKG_LIBS} }$2"
+	log "* checking if OpenMP works with PKG_CFLAGS='%s' PKG_LIBS='%s'... " "$CFLAGS" "$LIBS"
+	if ! PKG_CFLAGS="$CFLAGS" PKG_LIBS="$LIBS" "${R_HOME}"/bin/R CMD SHLIB --preclean --clean test.c >>config.log 2>&1; then
 		log "failed to build\n"
 		return 1
 	fi
@@ -40,6 +42,8 @@ stopifnot(identical(ans, 3L))
 }
 
 guess_openmp_macos () {
+	test_openmp "" "" \
+	|| \
 	test_openmp "-Xclang -fopenmp" "-lomp" \
 	|| \
 	test_openmp '$(SHLIB_OPENMP_CFLAGS)' '$(SHLIB_OPENMP_CFLAGS)' \
@@ -55,6 +59,8 @@ guess_openmp_macos () {
 	OMP_CFLAGS=""
 	OMP_LIBS=""
 }
+
+log "Variables from the environment: PKG_CFLAGS='%s' PKG_LIBS='%s'\n" "$PKG_CFLAGS" "$PKG_LIBS"
 
 case "$(uname)" in
 Darwin)
@@ -83,8 +89,10 @@ EOF
 	;;
 esac
 
-log "Using CFLAGS=%s, LIBS=%s for OpenMP\n" "${OMP_CFLAGS}" "${OMP_LIBS}"
+CFLAGS="${PKG_CFLAGS:+${PKG_CFLAGS} }${OMP_CFLAGS}"
+LIBS="${PKG_LIBS:+${PKG_LIBS} }${OMP_LIBS}"
+log "Adding PKG_CFLAGS='%s', PKG_LIBS='%s'\n" "$CFLAGS" "$LIBS"
 sed \
-	-e "s|@CONFIGURE_OPENMP_CFLAGS@|${OMP_CFLAGS}|" \
-	-e "s|@CONFIGURE_OPENMP_LIBS@|${OMP_LIBS}|" \
+	-e "s|@CONFIGURE_CFLAGS@|${CFLAGS}|" \
+	-e "s|@CONFIGURE_LIBS@|${LIBS}|" \
 	src/Makevars.in > src/Makevars

@@ -102,6 +102,24 @@ linker flags that the `configure` script will substitute.
 created, although it's prudent to also list them in `.Rbuildignore`. In
 our case, these files are `src/Makevars` and `config.log`.
 
+Bonus points: passing through `PKG_CFLAGS`, `PKG_LIBS`
+------------------------------------------------------
+
+The [OpenMP on macOS][mac-openmp] page recommends:
+
+> How you do the latter depends on the package, but if the package does not set
+> these environment variables itself, you can try
+>
+>     PKG_CPPFLAGS='-Xclang -fopenmp' PKG_LIBS=-lomp R CMD INSTALL myPackage
+
+Since our `Makevars` file sets `PKG_CPPFLAGS` and `PKG_LIBS`, Make won't
+read them from the environment. Solution: read them in the `configure`
+script and write them into `Makevars`, in addition to other variables
+being set, using the same string substitution as the OpenMP flags. For
+maximum compatibility, test a configuration with no added compiler or
+linker flags, making it possible for the user to override OpenMP
+configuration.
+
 Results
 -------
 
