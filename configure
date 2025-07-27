@@ -35,6 +35,6 @@ esac
 
 log "Using CFLAGS=%s, LIBS=%s for OpenMP\n" "${OMP_CFLAGS}" "${OMP_LIBS}"
 sed \
-	-e "s/@SHLIB_OPENMP_CFLAGS@/${OMP_CFLAGS}/" \
-	-e "s/@SHLIB_OPENMP_LIBS@/${OMP_LIBS}/" \
+	-e "s/@CONFIGURE_OPENMP_CFLAGS@/${OMP_CFLAGS}/" \
+	-e "s/@CONFIGURE_OPENMP_LIBS@/${OMP_LIBS}/" \
 	src/Makevars.in > src/Makevars
