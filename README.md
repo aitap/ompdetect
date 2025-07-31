@@ -180,7 +180,7 @@ thread_limit  max_threads    num_procs
   2147483647            8            8
 ```
 
-### GNU/Linux (R-devel), OpenMP disabled
+### GNU/Linux, R-devel, (OpenMP disabled)
 
 This can be achieved by configuring R with `--disable-openmp`.
 
@@ -192,13 +192,12 @@ Using CFLAGS=$(SHLIB_OPENMP_CFLAGS), LIBS=$(SHLIB_OPENMP_CFLAGS) for OpenMP
 ** libs
 using C compiler: ‘gcc (Debian 12.2.0-14+deb12u1) 12.2.0’
 make[1]: Entering directory 'REDACTED/ompdetect.Rcheck/00_pkg_src/ompdetect/src'
-gcc -I"/home/aitap/vcs/R-devel/include" -DNDEBUG   -I/usr/local/include    -fpic  -g -O2  -c test_omp.c -o test_omp.o
+gcc -I"REDACTED/R-devel/include" -DNDEBUG   -I/usr/local/include    -fpic  -g -O2  -c test_omp.c -o test_omp.o
 gcc -shared -L/usr/local/lib -o ompdetect.so test_omp.o
 make[1]: Leaving directory 'REDACTED/ompdetect.Rcheck/00_pkg_src/ompdetect/src'
 make[1]: Entering directory 'REDACTED/ompdetect.Rcheck/00_pkg_src/ompdetect/src'
 make[1]: Leaving directory 'REDACTED/ompdetect.Rcheck/00_pkg_src/ompdetect/src'
 installing to REDACTED/ompdetect.Rcheck/00LOCK-ompdetect/00new/ompdetect/libs
-
 ```
 
 ```
@@ -211,7 +210,7 @@ thread_limit  max_threads    num_procs
           -1           -1           -1
 ```
 
-### OpenBSD 7.7
+### OpenBSD 7.7, R-4.4.2
 
 OpenMP [is not supported on OpenBSD](https://j-bm.github.io/on/onp.html).
 
@@ -236,7 +235,7 @@ thread_limit  max_threads    num_procs
           -1           -1           -1
 ```
 
-### FreeBSD 13.4
+### FreeBSD 13.4, R-4.5.1
 
 As of this writing, `data.table`'s `configure` script fails to detect
 both OpenMP and `zlib` on FreeBSD.
@@ -261,6 +260,63 @@ OpenMP detected and working.
 >   omplimits()
 thread_limit  max_threads    num_procs
   2147483647            1            1
+```
+
+### GNU/Linux, R-3.0.0
+
+```
+* installing *source* package ‘ompdetect’ ...
+Using CFLAGS=$(SHLIB_OPENMP_CFLAGS), LIBS=$(SHLIB_OPENMP_CFLAGS) for OpenMP
+** libs
+gcc -IREDACTED/R-3.0.0/include -DNDEBUG  -I/usr/local/include   -fopenmp -fpic  -fcommon  -c test_omp.c -o test_omp.o
+gcc -shared -L/usr/local/lib -o ompdetect.so test_omp.o -fopenmp
+installing to REDACTED/ompdetect.Rcheck/ompdetect/libs
+```
+
+```
+> ### ** Examples
+>
+>   ompdetect()
+OpenMP detected and working.
+>   omplimits()
+thread_limit  max_threads    num_procs
+  2147483647           16           16
+```
+
+### Windows, R-3.4.4
+
+```
+* installing *source* package 'ompdetect' ...
+
+   **********************************************
+   WARNING: this package has a configure script
+         It probably needs manual configuration
+   **********************************************
+
+
+** libs
+
+*** arch - i386
+c:/Rtools/mingw_32/bin/gcc  -I"C:/PROGRA~1/R/R-34~1.4/include" -DNDEBUG       -fopenmp   -O3 -Wall  -std=gnu99 -mtune=generic -c test_omp.c -o test_omp.o
+c:/Rtools/mingw_32/bin/g++ -shared -s -static-libgcc -o ompdetect.dll tmp.def test_omp.o -fopenmp -LC:/PROGRA~1/R/R-34~1.4/bin/i386 -lR
+installing to C:/Users/User/ompdetect.Rcheck/ompdetect/libs/i386
+
+*** arch - x64
+c:/Rtools/mingw_64/bin/gcc  -I"C:/PROGRA~1/R/R-34~1.4/include" -DNDEBUG       -fopenmp   -O2 -Wall  -std=gnu99 -mtune=generic -c test_omp.c -o test_omp.o
+c:/Rtools/mingw_64/bin/g++ -shared -s -static-libgcc -o ompdetect.dll tmp.def test_omp.o -fopenmp -LC:/PROGRA~1/R/R-34~1.4/bin/x64 -lR
+installing to C:/Users/User/ompdetect.Rcheck/ompdetect/libs/x64
+```
+
+(examples are same for `i386` and `x64` cases)
+
+```
+> ### ** Examples
+>
+>   ompdetect()
+OpenMP detected and working.
+>   omplimits()
+thread_limit  max_threads    num_procs
+  2147483647            4            4
 ```
 
 [WRE-OpenMP]: https://cran.r-project.org/doc/manuals/R-exts.html#OpenMP-support
