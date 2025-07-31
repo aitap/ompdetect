@@ -10,7 +10,7 @@ all: $(PACKAGE)
 
 .PHONY: all check check-cran install-local
 
-$(PACKAGE): .Rbuildignore cleanup configure DESCRIPTION man/* NAMESPACE R/* README.md src/* tools/*
+$(PACKAGE): .Rbuildignore cleanup configure DESCRIPTION man/* NAMESPACE R/* README.md src/*
 	$(R) CMD build .
 
 check: $(PACKAGE)

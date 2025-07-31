@@ -61,9 +61,21 @@ debugging. POSIX `echo` is not guaranteed to understand `-n` or escape
 characters, so we'll use `printf` instead.
 
 On macOS (whose `uname` calls it "Darwin"), we call the compile-test
-script with different arguments, until one succeeds, or until we reach
+function with different arguments, until one succeeds, or until we reach
 the last case, which leaves the OpenMP variables empty. On other
 operating systems, we rely on R-provided flags unconditionally.
+
+The compile-test function runs R in order to `dyn.load()` the resulting
+shared library and run code from it. It tests the OpenMP support as
+completely as it can:
+
+1. Call `R CMD SHLIB` to compile and link a shared library from the test
+   C file.
+2. Load the resulting shared library and run an OpenMP loop from it.
+
+This aims to trigger all of compilation-time, linking-time,
+loading-time, and runtime problems before they prevent the real package
+from being installed.
 
 The last step is the [autotools]-style text replacement that takes the
 `src/Makevars.in` file and creates the `src/Makevars` from it for
@@ -81,28 +93,10 @@ linker flags that the `configure` script will substitute.
 created, although it's prudent to also list them in `.Rbuildignore`. In
 our case, these files are `src/Makevars` and `config.log`.
 
-### `tools/test-openmp.R`
-
-This part is written in R in order to make use of its session temporary
-directory and in order to `dyn.load()` the resulting shared library.
-
-This compile-test script must be called with two command-line arguments,
-the `CFLAGS` and the `LIBS`. It tests the OpenMP support as completely
-as it can:
-
-1. In a temporary directory, write a `Makevars` file, replicating the
-setup we'll be using with the main package.
-2. Compile and link the shared library from the test C file.
-3. Load the resulting shared library.
-4. Run an OpenMP loop from the shared library.
-
-If a test fails, the script signals an error and exits with a non-zero
-exit code. Either way, R then cleans up the session temporary directory.
-
 Results
 -------
 
-### macOS ([macOS builder][mac-builder], R-release)
+### macOS 13.3.1, R-4.5.1 ([macOS builder][mac-builder], R-release)
 
 ```
 * installing *source* package ‘ompdetect’ ...
@@ -117,7 +111,7 @@ using C compiler: ‘Apple clang version 14.0.3 (clang-1403.0.22.14.1)’
 using SDK: ‘MacOSX11.3.1.sdk’
 clang -arch arm64 -std=gnu2x -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG   -I/opt/R/arm64/include   -Xclang -fopenmp -fPIC  -falign-functions=64 -Wall -g -O2  -c test_omp.c -o test_omp.o
 clang -arch arm64 -std=gnu2x -dynamiclib -Wl,-headerpad_max_install_names -undefined dynamic_lookup -L/Library/Frameworks/R.framework/Resources/lib -L/opt/R/arm64/lib -o ompdetect.so test_omp.o -lomp -F/Library/Frameworks/R.framework/.. -framework R
-installing to /Volumes/PkgBuild/work/1753989261-c4d297d5ba796a6e/packages/big-sur-arm64/results/4.5/ompdetect.Rcheck/00LOCK-ompdetect/00new/ompdetect/libs
+installing to /Volumes/PkgBuild/work/1753992069-04991d62b5bd56d6/packages/big-sur-arm64/results/4.5/ompdetect.Rcheck/00LOCK-ompdetect/00new/ompdetect/libs
 ```
 
 ```
@@ -130,7 +124,7 @@ thread_limit  max_threads    num_procs
   2147483647            8            8
 ```
 
-### Windows ([Win-Builder], R-release)
+### Windows, R-4.5.1 ([Win-Builder], R-release)
 
 ```
 * installing *source* package 'ompdetect' ...
@@ -160,7 +154,7 @@ thread_limit  max_threads    num_procs
            2           48           48
 ```
 
-### GNU/Linux (Debian Bookworm)
+### GNU/Linux, R-4.2.2 (Debian Bookworm)
 
 ```
 * installing *source* package ‘ompdetect’ ...
@@ -198,12 +192,13 @@ Using CFLAGS=$(SHLIB_OPENMP_CFLAGS), LIBS=$(SHLIB_OPENMP_CFLAGS) for OpenMP
 ** libs
 using C compiler: ‘gcc (Debian 12.2.0-14+deb12u1) 12.2.0’
 make[1]: Entering directory 'REDACTED/ompdetect.Rcheck/00_pkg_src/ompdetect/src'
-gcc -I"REDACTED/R-devel/include" -DNDEBUG   -I/usr/local/include    -fpic  -g -O2  -c test_omp.c -o test_omp.o
+gcc -I"/home/aitap/vcs/R-devel/include" -DNDEBUG   -I/usr/local/include    -fpic  -g -O2  -c test_omp.c -o test_omp.o
 gcc -shared -L/usr/local/lib -o ompdetect.so test_omp.o
 make[1]: Leaving directory 'REDACTED/ompdetect.Rcheck/00_pkg_src/ompdetect/src'
 make[1]: Entering directory 'REDACTED/ompdetect.Rcheck/00_pkg_src/ompdetect/src'
 make[1]: Leaving directory 'REDACTED/ompdetect.Rcheck/00_pkg_src/ompdetect/src'
 installing to REDACTED/ompdetect.Rcheck/00LOCK-ompdetect/00new/ompdetect/libs
+
 ```
 
 ```

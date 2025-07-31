@@ -7,15 +7,43 @@ log () {
 
 test_openmp () {
 	log "* checking if OpenMP works with CFLAGS=%s LIBS=%s... " "$1" "$2"
-	if "${R_HOME}"/bin/Rscript tools/test-openmp.R "$1" "$2" >> config.log 2>&1; then
-		log "yes\n"
-		OMP_CFLAGS="$1"
-		OMP_LIBS="$2"
-		return 0
-	else
+	cat >"test.c" <<'EOF'
+#ifdef _OPENMP
+ #include <omp.h>
+#endif
+void test_openmp(int * result) {
+ int sum = 0;
+#ifdef _OPENMP
+ /* Sometimes compile-, link-, and load-tests are not enough.
+ ** So actually try to run an OpenMP loop. */
+ #pragma omp parallel for reduction(+:sum) num_threads(2)
+ for (int i = 1; i <= 2; ++i) sum += i;
+#endif
+ *result = sum;
+}
+EOF
+	if ! PKG_CFLAGS="$1" PKG_LIBS="$2" "${R_HOME}"/bin/R CMD SHLIB --preclean --clean test.c >>config.log 2>&1; then
 		log "no\n"
 		return 1
 	fi
+	rm -f test.c
+
+	if ! "${R_HOME}"/bin/Rscript -e '
+dll <- paste0("test", .Platform$dynlib.ext)
+dyn.load(dll)
+ans <- .C("test_openmp", ans = integer(1))$ans
+dyn.unload(dll)
+unlink(dll)
+stopifnot(identical(ans, 3L))
+' >> config.log 2>&1; then
+		log "no\n"
+		return 1
+	fi
+
+	OMP_CFLAGS="$1"
+	OMP_LIBS="$2"
+	log "yes\n"
+	return 0
 }
 
 case "$(uname)" in
