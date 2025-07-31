@@ -1,24 +1,23 @@
 How do I detect OpenMP support in an R package?
 ===============================================
 
-Most operating systems, including Linux and Windows
----------------------------------------------------
+It depends on the target operating system
+-----------------------------------------
+
+### Most operating systems, including Linux and Windows
 
 In your `Makevars`, set the `PKG_CFLAGS` and `PKG_LIBS` using the Make
 macros described in [Writing R Extensions][WRE-OpenMP]. If the OpenMP
 support was detected and enabled during R configuration, your package
 will use a compatible OpenMP runtime. If not (e.g. disabled by system
-administrator), it will not, so make sure to use `#ifdef _OPENMP` (or
-other tests appropriate for your language).
+administrator), OpenMP support will be disabled, so make sure to use
+`#ifdef _OPENMP` (or other tests appropriate for your language).
 
-macOS
------
+### macOS
 
 OpenMP isn't really supported by the Apple toolchain, but [with clever
 hacks][mac-openmp] you can get it to work. R does not detect OpenMP
-support by default, so the Make macros described above will be empty;
-instead, the package must manually test for the unsupported compiler
-flag `-Xclang -fopenmp` and add `-lomp` to the linker flags.
+support by default, so the Make macros described above will be empty.
 
 Nevertheless, starting with version 4.3, R for macOS provides an OpenMP
 runtime and a way for packages to [opt into][SIG-Mac-Apr25] using it on
@@ -26,12 +25,79 @@ the CRAN package builder:
 
 > the main part is to detect OpenMP even if R doesn't enable it
 > (possibly as an option?) and on macOS also try `-Xclang` in front of
-> the regular `-fopemp` to see if it works
+> the regular `-fopenmp` to see if it works
+
+(In addition to testing for `-Xclang -fopenmp`, the package also needs
+to link to the OpenMP runtime using the `-lomp` linker flag.)
 
 This package demonstrates how to achieve that. It is important to test
 multiple configurations on macOS to make sure that installing from
 source in weird cases (e.g. custom toolchain that understands
 `-fopenmp`) will still work.
+
+Contents
+--------
+
+### `src/Makevars.win`
+
+Adds `$(SHLIB_OPENMP_CFLAGS)` to the compiler and linker flags on
+Windows. R will warn about the package having a `configure` script for
+Unix-alikes but not for Windows, but we already have `src/Makevars.win`
+pre-configured.
+
+See [WRE 1.1.5 Package subdirectories][WRE-package-subdirectories] for
+more information.
+
+### `configure`
+
+On Unix-alikes, [`configure`][WRE-configure] is required to be a POSIX
+shell script. In theory, it could [immediately delegate to an R
+script][Kevin-Ushey-configure], but we will only use it for
+compile-testing; the rest of the script is more laconic when written in
+POSIX `sh`.
+
+A good `configure` leaves a `config.log` with detailed information for
+debugging. POSIX `echo` is not guaranteed to understand `-n` or escape
+characters, so we'll use `printf` instead.
+
+On macOS (whose `uname` calls it "Darwin"), we call the compile-test
+script with different arguments, until one succeeds, or until we reach
+the last case, which leaves the OpenMP variables empty. On other
+operating systems, we rely on R-provided flags unconditionally.
+
+The last step is the [autotools]-style text replacement that takes the
+`src/Makevars.in` file and creates the `src/Makevars` from it for
+`R CMD SHLIB` to consume.
+
+### `src/Makevars.in`
+
+This prototype for `src/Makevars` contains templates for compiler and
+linker flags that the `configure` script will substitute.
+
+### `cleanup`
+
+[For best results][WRE-configure], `configure` should be paired with a
+`cleanup` script, which removes all files that `configure` may have
+created, although it's prudent to also list them in `.Rbuildignore`. In
+our case, these files are `src/Makevars` and `config.log`.
+
+### `tools/test-openmp.R`
+
+This part is written in R in order to make use of its session temporary
+directory and in order to `dyn.load()` the resulting shared library.
+
+This compile-test script must be called with two command-line arguments,
+the `CFLAGS` and the `LIBS`. It tests the OpenMP support as completely
+as it can:
+
+1. In a temporary directory, write a `Makevars` file, replicating the
+setup we'll be using with the main package.
+2. Compile and link the shared library from the test C file.
+3. Load the resulting shared library.
+4. Run an OpenMP loop from the shared library.
+
+If a test fails, the script signals an error and exits with a non-zero
+exit code. Either way, R then cleans up the session temporary directory.
 
 Results
 -------
@@ -119,5 +185,9 @@ thread_limit  max_threads    num_procs
 [WRE-OpenMP]: https://cran.r-project.org/doc/manuals/R-exts.html#OpenMP-support
 [mac-openmp]: https://mac.r-project.org/openmp/
 [SIG-Mac-Apr25]: https://stat.ethz.ch/pipermail/r-sig-mac/2025-April/015189.html
+[WRE-package-subdirectories]: https://cran.r-project.org/doc/manuals/R-exts.html#Package-subdirectories
+[WRE-configure]: https://cran.r-project.org/doc/manuals/R-exts.html#Configure-and-cleanup
+[Kevin-Ushey-configure]: https://github.com/kevinushey/configure
+[autotools]: https://autotools.info/
 [mac-builder]: https://mac.r-project.org/macbuilder/submit.html
 [Win-Builder]: https://win-builder.r-project.org/
