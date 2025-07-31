@@ -1,7 +1,8 @@
 args <- commandArgs(TRUE)
 setwd(tempdir())
 
-# must be in Makevars so that $(Make macros) would work
+# Make macros could also be expanded from environment variables, but
+# this is simpler
 writeLines(c(
 	paste("PKG_CFLAGS =", args[[1]]),
 	paste("PKG_LIBS =", args[[2]])
@@ -35,7 +36,7 @@ ans <- .C("test_openmp", ans = integer(1))$ans
 dyn.unload(dll)
 
 cat(sprintf(
-	"Return value is %d (%d indicates success, %d indicates OpenMP disabled)",
+	"Return value is %d (%d indicates success, %d indicates OpenMP disabled)\n",
 	ans, desired, not_working
 ))
 stopifnot(identical(ans, desired))
