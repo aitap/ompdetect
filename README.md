@@ -117,7 +117,7 @@ using C compiler: ‘Apple clang version 14.0.3 (clang-1403.0.22.14.1)’
 using SDK: ‘MacOSX11.3.1.sdk’
 clang -arch arm64 -std=gnu2x -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG   -I/opt/R/arm64/include   -Xclang -fopenmp -fPIC  -falign-functions=64 -Wall -g -O2  -c test_omp.c -o test_omp.o
 clang -arch arm64 -std=gnu2x -dynamiclib -Wl,-headerpad_max_install_names -undefined dynamic_lookup -L/Library/Frameworks/R.framework/Resources/lib -L/opt/R/arm64/lib -o ompdetect.so test_omp.o -lomp -F/Library/Frameworks/R.framework/.. -framework R
-installing to /Volumes/PkgBuild/work/1753626598-edb8ae8f5c059434/packages/big-sur-arm64/results/4.5/ompdetect.Rcheck/00LOCK-ompdetect/00new/ompdetect/libs
+installing to /Volumes/PkgBuild/work/1753989261-c4d297d5ba796a6e/packages/big-sur-arm64/results/4.5/ompdetect.Rcheck/00LOCK-ompdetect/00new/ompdetect/libs
 ```
 
 ```
@@ -167,9 +167,13 @@ thread_limit  max_threads    num_procs
 ** using staged installation
 Using CFLAGS=$(SHLIB_OPENMP_CFLAGS), LIBS=$(SHLIB_OPENMP_CFLAGS) for OpenMP
 ** libs
+make[1]: Entering directory 'REDACTED/ompdetect.Rcheck/00_pkg_src/ompdetect/src'
 gcc -I"/usr/share/R/include" -DNDEBUG     -fopenmp -fpic  -g -O2 -ffile-prefix-map=/build/r-base-wZDgjM/r-base-4.2.2.20221110=. -fstack-protector-strong -Wformat -Werror=format-security -Wdate-time -D_FORTIFY_SOURCE=2  -c test_omp.c -o test_omp.o
 gcc -shared -L/usr/lib/R/lib -Wl,-z,relro -o ompdetect.so test_omp.o -fopenmp -L/usr/lib/R/lib -lR
-installing to REDACTED/ompdetect/ompdetect.Rcheck/00LOCK-ompdetect/00new/ompdetect/libs
+make[1]: Leaving directory 'REDACTED/ompdetect.Rcheck/00_pkg_src/ompdetect/src'
+make[1]: Entering directory 'REDACTED/ompdetect.Rcheck/00_pkg_src/ompdetect/src'
+make[1]: Leaving directory 'REDACTED/ompdetect.Rcheck/00_pkg_src/ompdetect/src'
+installing to REDACTED/ompdetect.Rcheck/00LOCK-ompdetect/00new/ompdetect/libs
 ```
 
 ```
@@ -179,7 +183,89 @@ installing to REDACTED/ompdetect/ompdetect.Rcheck/00LOCK-ompdetect/00new/ompdete
 OpenMP detected and working.
 >   omplimits()
 thread_limit  max_threads    num_procs
-  2147483647            4            4
+  2147483647            8            8
+```
+
+### GNU/Linux (R-devel), OpenMP disabled
+
+This can be achieved by configuring R with `--disable-openmp`.
+
+```
+* installing *source* package ‘ompdetect’ ...
+** this is package ‘ompdetect’ version ‘0.0-1’
+** using staged installation
+Using CFLAGS=$(SHLIB_OPENMP_CFLAGS), LIBS=$(SHLIB_OPENMP_CFLAGS) for OpenMP
+** libs
+using C compiler: ‘gcc (Debian 12.2.0-14+deb12u1) 12.2.0’
+make[1]: Entering directory 'REDACTED/ompdetect.Rcheck/00_pkg_src/ompdetect/src'
+gcc -I"REDACTED/R-devel/include" -DNDEBUG   -I/usr/local/include    -fpic  -g -O2  -c test_omp.c -o test_omp.o
+gcc -shared -L/usr/local/lib -o ompdetect.so test_omp.o
+make[1]: Leaving directory 'REDACTED/ompdetect.Rcheck/00_pkg_src/ompdetect/src'
+make[1]: Entering directory 'REDACTED/ompdetect.Rcheck/00_pkg_src/ompdetect/src'
+make[1]: Leaving directory 'REDACTED/ompdetect.Rcheck/00_pkg_src/ompdetect/src'
+installing to REDACTED/ompdetect.Rcheck/00LOCK-ompdetect/00new/ompdetect/libs
+```
+
+```
+> ### ** Examples
+>
+>   ompdetect()
+OpenMP not detected.
+>   omplimits()
+thread_limit  max_threads    num_procs
+          -1           -1           -1
+```
+
+### OpenBSD 7.7
+
+OpenMP [is not supported on OpenBSD](https://j-bm.github.io/on/onp.html).
+
+```
+* installing *source* package 'ompdetect' ...
+** using staged installation
+Using CFLAGS=$(SHLIB_OPENMP_CFLAGS), LIBS=$(SHLIB_OPENMP_CFLAGS) for OpenMP
+** libs
+using C compiler: 'OpenBSD clang version 16.0.6'
+cc -I"/usr/local/lib/R/include" -DNDEBUG   -I/usr/local/include    -fpic  -O2 -pipe  -c test_omp.c -o test_omp.o
+cc -shared -fPIC -L/usr/local/lib/R/lib -L/usr/local/lib -Wl,-R/usr/local/lib/R/lib -o ompdetect.so test_omp.o -L/usr/local/lib/R/lib -lR
+installing to REDACTED/ompdetect.Rcheck/00LOCK-ompdetect/00new/ompdetect/libs
+```
+
+```
+> ### ** Examples
+>
+>   ompdetect()
+OpenMP not detected.
+>   omplimits()
+thread_limit  max_threads    num_procs
+          -1           -1           -1
+```
+
+### FreeBSD 13.4
+
+As of this writing, `data.table`'s `configure` script fails to detect
+both OpenMP and `zlib` on FreeBSD.
+
+```
+* installing *source* package ‘ompdetect’ ...
+** this is package ‘ompdetect’ version ‘0.0-1’
+** using staged installation
+Using CFLAGS=$(SHLIB_OPENMP_CFLAGS), LIBS=$(SHLIB_OPENMP_CFLAGS) for OpenMP
+** libs
+using C compiler: ‘FreeBSD clang version 19.1.7 (https://github.com/llvm/llvm-project.git llvmorg-19.1.7-0-gcd708029e0b2)’
+cc -std=gnu23 -I"/usr/local/lib/R/include" -DNDEBUG   -DLIBICONV_PLUG -I/usr/local/include -isystem /usr/local/include   -fopenmp -fpic  -O2 -pipe  -DLIBICONV_PLUG -fstack-protector-strong -isystem /usr/local/include -fno-strict-aliasing   -c test_omp.c -o test_omp.o
+cc -std=gnu23 -shared -L/usr/local/lib/R/lib -Wl,-rpath=/usr/local/lib/gcc13 -L/usr/local/lib/gcc13 -L/usr/local/lib -fstack-protector-strong -o ompdetect.so test_omp.o -fopenmp -L/usr/local/lib/R/lib -lR
+installing to REDACTED/ompdetect.Rcheck/00LOCK-ompdetect/00new/ompdetect/libs
+```
+
+```
+> ### ** Examples
+>
+>   ompdetect()
+OpenMP detected and working.
+>   omplimits()
+thread_limit  max_threads    num_procs
+  2147483647            1            1
 ```
 
 [WRE-OpenMP]: https://cran.r-project.org/doc/manuals/R-exts.html#OpenMP-support
