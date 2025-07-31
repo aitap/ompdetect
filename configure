@@ -1,9 +1,6 @@
 #!/bin/sh
 : > config.log
 
-OMP_CFLAGS='$(SHLIB_OPENMP_CFLAGS)'
-OMP_LIBS='$(SHLIB_OPENMP_CFLAGS)'
-
 log () {
 	printf "$@" | tee -a config.log
 }
@@ -21,16 +18,17 @@ test_openmp () {
 	fi
 }
 
-detect_openmp_darwin () {
-	test_openmp "$OMP_CFLAGS" "$OMP_LIBS" || \
-	test_openmp "-Xclang -fopenmp" "-lomp" || \
-	{ OMP_CFLAGS=""; OMP_LIBS=""; }
-}
-
 case "$(uname)" in
 Darwin)
 	log "Guessing OpenMP configuration for macOS\n"
-	detect_openmp_darwin ;;
+	test_openmp '$(SHLIB_OPENMP_CFLAGS)' '$(SHLIB_OPENMP_CFLAGS)' || \
+	test_openmp "-Xclang -fopenmp" "-lomp" || \
+	{ OMP_CFLAGS=""; OMP_LIBS=""; }
+	;;
+*)
+	OMP_CFLAGS='$(SHLIB_OPENMP_CFLAGS)'
+	OMP_LIBS='$(SHLIB_OPENMP_CFLAGS)'
+	;;
 esac
 
 log "Using CFLAGS=%s, LIBS=%s for OpenMP\n" "${OMP_CFLAGS}" "${OMP_LIBS}"
