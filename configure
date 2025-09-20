@@ -8,15 +8,12 @@ log () {
 test_openmp () {
 	log "* checking if OpenMP works with CFLAGS=%s LIBS=%s... " "$1" "$2"
 	cat >"test.c" <<'EOF'
-#ifdef _OPENMP
- #include <omp.h>
-#endif
 void test_openmp(int * result) {
  int sum = 0;
 #ifdef _OPENMP
  /* Sometimes compile-, link-, and load-tests are not enough.
  ** So actually try to run an OpenMP loop. */
- #pragma omp parallel for reduction(+:sum) num_threads(2)
+ #pragma omp parallel for reduction(+:sum) num_threads(2) schedule(dynamic)
  for (int i = 1; i <= 2; ++i) sum += i;
 #endif
  *result = sum;

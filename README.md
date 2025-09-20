@@ -35,6 +35,15 @@ multiple configurations on macOS to make sure that installing from
 source in weird cases (e.g. custom toolchain that understands
 `-fopenmp`) will still work.
 
+As of 2025, newer Xcode versions conflict with the OpenMP runtime
+shipped with R. Use `schedule(dynamic)` to [check for it][datatable7318]
+and avoid accidentally building a package shared library that will later
+fail to load. Installing a [different version of the OpenMP
+runtime][mac-openmp] breaks compatibility with CRAN binaries, so it's up
+to the administrator to set `SHLIB_OPENMP_CFLAGS = -Xclang -fopenmp
+-Wl,/usr/local/lib/libomp.dylib` (untested) and compile all packages
+from source.
+
 Contents
 --------
 
@@ -322,6 +331,7 @@ thread_limit  max_threads    num_procs
 [WRE-OpenMP]: https://cran.r-project.org/doc/manuals/R-exts.html#OpenMP-support
 [mac-openmp]: https://mac.r-project.org/openmp/
 [SIG-Mac-Apr25]: https://stat.ethz.ch/pipermail/r-sig-mac/2025-April/015189.html
+[datatable7318]: https://github.com/Rdatatable/data.table/pull/7318#issuecomment-3311861544
 [WRE-package-subdirectories]: https://cran.r-project.org/doc/manuals/R-exts.html#Package-subdirectories
 [WRE-configure]: https://cran.r-project.org/doc/manuals/R-exts.html#Configure-and-cleanup
 [Kevin-Ushey-configure]: https://github.com/kevinushey/configure
