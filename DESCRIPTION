@@ -1,6 +1,6 @@
 Package: ompdetect
 Title: Example Configure Test for 'OpenMP'
-Version: 0.0-1
+Version: 0.1-0
 Description: Includes tests for macOS binary builds on CRAN.
 License: GPL (>= 2)
 Authors@R: person('Ivan', 'Krylov', role = c('aut', 'cre'), email =
