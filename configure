@@ -53,7 +53,6 @@ Darwin)
 	log "Guessing OpenMP configuration for macOS\n"
 	test_openmp '$(SHLIB_OPENMP_CFLAGS)' '$(SHLIB_OPENMP_CFLAGS)' || \
 	test_openmp "-Xclang -fopenmp" "-lomp" || \
-	test_openmp "-Xclang -fopenmp" "/usr/local/lib/libomp.dylib" || \
 	{ OMP_CFLAGS=""; OMP_LIBS=""; }
 	rm -f test.*
 	;;
