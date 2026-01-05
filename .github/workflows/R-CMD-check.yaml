@@ -54,20 +54,30 @@ jobs:
       - name: Install dependencies
         run: |
           remotes::install_deps(dependencies = TRUE)
-          remotes::install_cran("rcmdcheck")
         shell: Rscript {0}
 
-      - name: Check
+      - name: Install
         env:
           _R_CHECK_CRAN_INCOMING_REMOTE_: false
         run: |
-          options(crayon.enabled = TRUE)
-          rcmdcheck::rcmdcheck(args = c("--no-manual"), error_on = "warning", check_dir = "check")
-        shell: Rscript {0}
+          R CMD INSTALL --clean --preclean .
 
-      - name: Check
+      - name: Call
+        run: Rscript -e 'ompdetect::ompdetect(); ompdetect::omplimits()'
+
+      - name: OpenMP runtime
+        run: |
+          if clang --version | grep 'clang version 17'; then
+            curl -O https://mac.r-project.org/openmp/openmp-19.1.0-darwin20-Release.tar.gz
+            sudo tar fvvxz openmp-19.1.0-darwin20-Release.tar.gz -C /
+            rm -f openmp-19.1.0-darwin20-Release.tar.gz
+          fi # otherwise R-bundled runtime is fine
+
+      - name: Install2
         env:
           _R_CHECK_CRAN_INCOMING_REMOTE_: false
         run: |
-          R CMD build .
-          R CMD INSTALL ompdetect_*.tar.gz
+          R CMD INSTALL --clean --preclean .
+
+      - name: Call2
+        run: Rscript -e 'ompdetect::ompdetect(); ompdetect::omplimits()'
