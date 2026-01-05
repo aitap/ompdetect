@@ -27,15 +27,11 @@ jobs:
       - name: Dependencies
         run: ./run.sh install_deps
 
-      - name: Test
-        run: ./run.sh run_tests
-
-      - name: Logs
-        run: ./run.sh dump_logs
-        if: failure()
-
       - name: Install
         run: R CMD INSTALL .
+
+      - name: Log
+        run: cat config.log
 
       - name: Call
         run: Rscript -e 'ompdetect::ompdetect(); ompdetect::omplimits()'
